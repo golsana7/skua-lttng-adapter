@@ -1,0 +1,71 @@
+hash: 6635ab42b8b70f1a54d50a207bcd7cf8e1d2755c5a6a68af22405549f0960f09
+updated: 2018-04-29T15:08:42.75851993-04:00
+imports:
+- name: github.com/apache/thrift
+  version: 53dd39833a08ce33582e5ff31fa18bb4735d6731
+  subpackages:
+  - lib/go/thrift
+- name: github.com/codahale/hdrhistogram
+  version: f8ad88b59a584afeee9d334eff879b104439117b
+- name: github.com/go-kit/kit
+  version: a9ca6725cbbea455e61c6bc8a1ed28e81eb3493b
+  subpackages:
+  - metrics
+- name: github.com/gorilla/handlers
+  version: 3a5767ca75ece5f7f1440b1d16975247f8d8b221
+- name: github.com/gorilla/mux
+  version: 392c28fe23e1c45ddba891b0320b3b5df220beea
+- name: github.com/olivere/elastic
+  version: f1fd7305d0b6270192b27010fe1193568b18e4b6
+- name: github.com/opentracing-contrib/go-stdlib
+  version: 1de4cc2120e71f745a5810488bf64b29b6d7d9f6
+  subpackages:
+  - nethttp
+- name: github.com/opentracing/opentracing-go
+  version: 1949ddbfd147afd4d964a9f00b24eb291e0e7c38
+  subpackages:
+  - ext
+  - log
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: github.com/spf13/cobra
+  version: 7b2c5ac9fc04fc5efafb60700713d4fa609b777b
+- name: github.com/spf13/pflag
+  version: 583c0c0531f06d5278b7d917446061adc344b5cd
+- name: github.com/spf13/viper
+  version: b5e8006cbee93ec955a89ab31e0e3ce3204f3736
+- name: github.com/stretchr/testify
+  version: 12b6f73e6084dad08a7c6e575284b177ecafbc71
+  subpackages:
+  - assert
+  - mock
+- name: github.com/uber/jaeger-client-go
+  version: 3205d4aabc55c1a13b1e48d3db793bc8cd37bd16
+  subpackages:
+  - config
+  - internal/baggage
+  - internal/baggage/remote
+  - internal/spanlog
+  - internal/throttler
+  - log
+  - rpcmetrics
+  - thrift-gen/agent
+  - thrift-gen/baggage
+  - thrift-gen/jaeger
+  - thrift-gen/sampling
+  - thrift-gen/zipkincore
+  - transport
+  - utils
+- name: github.com/uber/jaeger-lib
+  version: 4267858c0679cd4e47cefed8d7f70fd386cfb567
+  subpackages:
+  - metrics
+- name: github.com/uber/tchannel-go
+  version: 1a0e35378f6f721bc07f6c4466bc9701ed70b506
+  subpackages:
+  - thrift
+- name: golang.org/x/net
+  version: b68f30494add4df6bd8ef5e82803f308e7f7c59c
+  subpackages:
+  - context
+testImports: []
