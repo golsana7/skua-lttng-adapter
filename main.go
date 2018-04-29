@@ -3,6 +3,7 @@ package main
 import (
 	"time"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/uber/jaeger-client-go/config"
 	"fmt"
 	"os"
@@ -12,13 +13,41 @@ import (
 const jAgentHostPort = "0.0.0.0:6831"
 
 func main() {
-	//input := "asdfasdfa"
+	input := []string{"asdfasdfa", "adfadf"}
 
 	tracer := makeTracer()
 
-	jtracer := tracer.(*jaeger.Tracer)
+	//jtracer := tracer.(*jaeger.Tracer)
+	//_ = jtracer
 
-	_ = jtracer
+	rootSpan := tracer.StartSpan("kernel_root")
+
+	for _, line := range input {
+		processTrace(rootSpan, line)
+	}
+}
+
+func processTrace(rootSpan opentracing.Span, line string) {
+	// TODO: parse data from line
+	operationName := "syscall_write"
+	startTime := time.Now()
+	endTime := startTime.Add(2 * time.Millisecond)
+
+	span := rootSpan.Tracer().StartSpan(
+		operationName,
+		opentracing.ChildOf(rootSpan.Context()),
+		opentracing.StartTime(startTime))
+
+	spanContext := span.Context().(jaeger.SpanContext)
+	// TODO use reflection to modify span context
+	_ = spanContext
+
+	span.FinishWithOptions(opentracing.FinishOptions{
+		FinishTime: endTime,
+		LogRecords: []opentracing.LogRecord{
+			{Timestamp: endTime, Fields: []log.Field{log.String("raw", line)}},
+		},
+	})
 }
 
 func makeTracer() opentracing.Tracer {
