@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -14,6 +18,14 @@ import (
 )
 
 const jAgentHostPort = "0.0.0.0:6831"
+
+var (
+	order = binary.LittleEndian
+
+	reLine = regexp.MustCompile(`^\[(.+)\] \(\+(.+)\) .+ syscall_(.+)_(.+): .+ tid = \[ (\[0\].+\[31\] = \d+) \] .+$`)
+	reDate = regexp.MustCompile(`^(\d+):(\d+):(\d+).(\d+)$`)
+	reDur  = regexp.MustCompile(`^(\d+).(\d+)$`)
+)
 
 func main() {
 	input := []string{
@@ -33,14 +45,44 @@ func main() {
 }
 
 func processTrace(rootSpan opentracing.Span, line string) {
-	// TODO: parse data from line
-	operationName := "syscall_write"
-	startTime := time.Now()
-	endTime := startTime.Add(2 * time.Millisecond)
+	fmt.Println(line)
+	defer fmt.Println()
 
-	spanID := uint64(13123123123123)
-	traceID := uint64(3452345234523452345)
-	parentID := uint64(6789679867896789678)
+	lineMatch := reLine.FindStringSubmatch(line)[1:]
+	//fmt.Println(lineMatch)
+
+	strArr := strings.Split(lineMatch[4], ", ")
+	var arr []byte
+	for _, a := range strArr {
+		num := inty(strings.Split(a, " = ")[1])
+		arr = append(arr, byte(num))
+	}
+	//fmt.Println(arr)
+
+	spanID := order.Uint64(arr[0:8])
+	traceID := order.Uint64(arr[8:16])
+	parentID := order.Uint64(arr[16:24])
+	tid := order.Uint16(arr[24:26])
+	fmt.Println(spanID, traceID, parentID, tid)
+
+	if traceID == 0 || parentID == 0 {
+		fmt.Println("dropping")
+		return
+	}
+
+	timeMatch := reDate.FindStringSubmatch(lineMatch[0])[1:]
+	durMatch := reDur.FindStringSubmatch(lineMatch[1])[1:]
+
+	now := time.Now()
+	startTime := time.Date(now.Year(), now.Month(), now.Day(), inty(timeMatch[0]), inty(timeMatch[1]), inty(timeMatch[2]), inty(timeMatch[3]), now.Location())
+	fmt.Println(startTime)
+
+	duration := time.Duration(inty(durMatch[0]))*time.Second + time.Duration(inty(durMatch[1]))*time.Nanosecond
+	fmt.Println(duration)
+	endTime := startTime.Add(duration)
+
+	operationName := fmt.Sprintf("syscall_%s_%s", lineMatch[2], lineMatch[3])
+	fmt.Println(operationName)
 
 	span := rootSpan.Tracer().StartSpan(
 		operationName,
@@ -78,6 +120,11 @@ func setContext(os *jaeger.Span, trace, span, parent uint64) {
 
 	parentID := (*uint64)(unsafe.Pointer(rs.Elem().FieldByName("parentID").UnsafeAddr()))
 	*parentID = parent
+}
+
+func inty(l string) int {
+	x, _ := strconv.Atoi(l)
+	return x
 }
 
 func makeTracer() opentracing.Tracer {
