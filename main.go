@@ -51,8 +51,8 @@ func main() {
 }
 
 func processTrace(rootSpan opentracing.Span, line string) {
-	fmt.Println(line)
-	defer fmt.Println()
+	//fmt.Println(line)
+	//defer fmt.Println()
 
 	lineMatch := reLine.FindStringSubmatch(line)[1:]
 	//fmt.Println(lineMatch)
@@ -72,9 +72,11 @@ func processTrace(rootSpan opentracing.Span, line string) {
 	fmt.Println(spanID, traceID, parentID, tid)
 
 	if traceID == 0 || parentID == 0 {
-		fmt.Println("dropping")
+		//fmt.Println("dropping")
 		return
 	}
+
+	fmt.Println(line)
 
 	timeMatch := reDate.FindStringSubmatch(lineMatch[0])[1:]
 	durMatch := reDur.FindStringSubmatch(lineMatch[1])[1:]
