@@ -48,6 +48,8 @@ func main() {
 	if scanner.Err() != nil {
 		// handle error.
 	}
+
+	rootSpan.Finish()
 }
 
 func processTrace(rootSpan opentracing.Span, line string) {
@@ -69,7 +71,6 @@ func processTrace(rootSpan opentracing.Span, line string) {
 	traceID := order.Uint64(arr[8:16])
 	parentID := order.Uint64(arr[16:24])
 	tid := order.Uint16(arr[24:26])
-	fmt.Println(spanID, traceID, parentID, tid)
 
 	if traceID == 0 || parentID == 0 {
 		//fmt.Println("dropping")
@@ -94,13 +95,13 @@ func processTrace(rootSpan opentracing.Span, line string) {
 
 	span := rootSpan.Tracer().StartSpan(
 		operationName,
-		opentracing.ChildOf(rootSpan.Context()),
 		opentracing.StartTime(startTime)).(*jaeger.Span)
 
 	//fmt.Println(span.Context())
 	setContext(span, traceID, spanID, parentID)
 
 	// prints trace, span, parent
+	fmt.Println(spanID, traceID, parentID, tid)
 	fmt.Println(span.Context())
 
 	span.FinishWithOptions(opentracing.FinishOptions{
