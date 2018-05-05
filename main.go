@@ -62,6 +62,7 @@ func main() {
 
 type threadRunning struct {
 	span      *jaeger.Span
+	operationName string
 	startTime time.Time
 	entryLog  string
 }
@@ -108,9 +109,10 @@ func processTrace(rootSpan opentracing.Span, line string) {
 
 	fmt.Println(spanID, traceID, parentID, tid)
 
+	operationName := fmt.Sprintf("syscall_%s", lineMatch[3])
+	fmt.Println(operationName)
+
 	if lineMatch[2] == "entry" {
-		operationName := fmt.Sprintf("syscall_%s", lineMatch[3])
-		fmt.Println(operationName)
 
 		span := rootSpan.Tracer().StartSpan(
 			operationName,
@@ -124,6 +126,7 @@ func processTrace(rootSpan opentracing.Span, line string) {
 
 		threads[tid] = &threadRunning{
 			span:      span,
+			operationName: operationName,
 			startTime: startTime,
 			entryLog:  line,
 		}
@@ -131,6 +134,11 @@ func processTrace(rootSpan opentracing.Span, line string) {
 		// get thread_running
 		thr := threads[tid]
 		if thr == nil {
+			return
+		}
+
+		if thr.operationName != operationName {
+			threads[tid] = nil
 			return
 		}
 
