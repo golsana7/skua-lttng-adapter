@@ -11,11 +11,11 @@ import (
 	"time"
 	"unsafe"
 
+	"bufio"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
-	"bufio"
 )
 
 const jAgentHostPort = "0.0.0.0:6831"
@@ -28,29 +28,45 @@ var (
 	reDur  = regexp.MustCompile(`^(\d+).(\d+)$`)
 )
 
-func main() {
-	//input := []string{
-	//	`[22:31:49.236500519] (+0.000021655) voxel syscall_entry_write: { cpu_id = 12 }, { pid = 25831, tid = [ [0] = 0, [1] = 0, [2] = 0, [3] = 0, [4] = 0, [5] = 0, [6] = 0, [7] = 0, [8] = 0, [9] = 0, [10] = 0, [11] = 0, [12] = 0, [13] = 0, [14] = 0, [15] = 0, [16] = 0, [17] = 0, [18] = 0, [19] = 0, [20] = 0, [21] = 0, [22] = 0, [23] = 0, [24] = 231, [25] = 100, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { fd = 1, buf = 94637671103600, count = 469 }`,
-	//	`[22:31:49.236514251] (+0.000013732) voxel syscall_exit_write: { cpu_id = 12 }, { pid = 25831, tid = [ [0] = 0, [1] = 0, [2] = 0, [3] = 0, [4] = 0, [5] = 0, [6] = 0, [7] = 0, [8] = 0, [9] = 0, [10] = 0, [11] = 0, [12] = 0, [13] = 0, [14] = 0, [15] = 0, [16] = 0, [17] = 0, [18] = 0, [19] = 0, [20] = 0, [21] = 0, [22] = 0, [23] = 0, [24] = 231, [25] = 100, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { ret = 469 }`,
-	//	`[22:31:49.236524347] (+0.000010096) voxel syscall_exit_select: { cpu_id = 15 }, { pid = 25753, tid = [ [0] = 0, [1] = 0, [2] = 0, [3] = 0, [4] = 0, [5] = 0, [6] = 0, [7] = 0, [8] = 0, [9] = 0, [10] = 0, [11] = 0, [12] = 0, [13] = 0, [14] = 0, [15] = 0, [16] = 0, [17] = 0, [18] = 0, [19] = 0, [20] = 0, [21] = 0, [22] = 0, [23] = 0, [24] = 153, [25] = 100, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { ret = 1, overflow = 0, tvp = 0, _readfds_length = 2, readfds = [ [0] = 0x0, [1] = 0x8 ], _writefds_length = 2, writefds = [ [0] = 0x0, [1] = 0x0 ], _exceptfds_length = 0, exceptfds = [ ] }`,
-	//}
+const debug = false
 
+func main() {
 	tracer := makeTracer()
 
 	// note: this span should not show up in the final jaeger outputs
 	rootSpan := tracer.StartSpan("kernel_root")
 
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		processTrace(rootSpan, scanner.Text())
-	}
+	if debug {
+		input := []string{
+			`[22:31:49.236500519] (+0.000021655) voxel syscall_entry_write: { cpu_id = 12 }, { pid = 25831, tid = [ [0] = 0, [1] = 0, [2] = 0, [3] = 0, [4] = 0, [5] = 0, [6] = 0, [7] = 0, [8] = 0, [9] = 0, [10] = 0, [11] = 0, [12] = 0, [13] = 0, [14] = 0, [15] = 0, [16] = 0, [17] = 0, [18] = 0, [19] = 0, [20] = 0, [21] = 0, [22] = 0, [23] = 0, [24] = 231, [25] = 100, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { fd = 1, buf = 94637671103600, count = 469 }`,
+			`[22:31:49.236514251] (+0.000013732) voxel syscall_exit_write: { cpu_id = 12 }, { pid = 25831, tid = [ [0] = 0, [1] = 0, [2] = 0, [3] = 0, [4] = 0, [5] = 0, [6] = 0, [7] = 0, [8] = 0, [9] = 0, [10] = 0, [11] = 0, [12] = 0, [13] = 0, [14] = 0, [15] = 0, [16] = 0, [17] = 0, [18] = 0, [19] = 0, [20] = 0, [21] = 0, [22] = 0, [23] = 0, [24] = 231, [25] = 100, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { ret = 469 }`,
+			`[22:31:49.236524347] (+0.000010096) voxel syscall_exit_select: { cpu_id = 15 }, { pid = 25753, tid = [ [0] = 0, [1] = 0, [2] = 0, [3] = 0, [4] = 0, [5] = 0, [6] = 0, [7] = 0, [8] = 0, [9] = 0, [10] = 0, [11] = 0, [12] = 0, [13] = 0, [14] = 0, [15] = 0, [16] = 0, [17] = 0, [18] = 0, [19] = 0, [20] = 0, [21] = 0, [22] = 0, [23] = 0, [24] = 153, [25] = 100, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { ret = 1, overflow = 0, tvp = 0, _readfds_length = 2, readfds = [ [0] = 0x0, [1] = 0x8 ], _writefds_length = 2, writefds = [ [0] = 0x0, [1] = 0x0 ], _exceptfds_length = 0, exceptfds = [ ] }`,
+		}
 
-	if scanner.Err() != nil {
-		// handle error.
+		for _, l := range input {
+			processTrace(rootSpan, l)
+		}
+	} else {
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			processTrace(rootSpan, scanner.Text())
+		}
+
+		if scanner.Err() != nil {
+			// handle error.
+		}
 	}
 
 	rootSpan.Finish()
 }
+
+type threadRunning struct {
+	span      *jaeger.Span
+	startTime time.Time
+	entryLog  string
+}
+
+var threads = make(map[uint16]*threadRunning)
 
 func processTrace(rootSpan opentracing.Span, line string) {
 	//fmt.Println(line)
@@ -90,29 +106,53 @@ func processTrace(rootSpan opentracing.Span, line string) {
 	fmt.Println(duration)
 	endTime := startTime.Add(duration)
 
-	operationName := fmt.Sprintf("syscall_%s_%s", lineMatch[2], lineMatch[3])
-	fmt.Println(operationName)
-
-	span := rootSpan.Tracer().StartSpan(
-		operationName,
-		opentracing.StartTime(startTime)).(*jaeger.Span)
-
-	//fmt.Println(span.Context())
-	setContext(span, traceID, spanID, parentID)
-
-	// prints trace, span, parent
 	fmt.Println(spanID, traceID, parentID, tid)
-	fmt.Println(span.Context())
 
-	span.FinishWithOptions(opentracing.FinishOptions{
-		FinishTime: endTime,
-		LogRecords: []opentracing.LogRecord{
-			{
-				Timestamp: endTime,
-				Fields:    []log.Field{log.String("raw", line)},
+	if lineMatch[2] == "entry" {
+		operationName := fmt.Sprintf("syscall_%s", lineMatch[3])
+		fmt.Println(operationName)
+
+		span := rootSpan.Tracer().StartSpan(
+			operationName,
+			opentracing.StartTime(startTime)).(*jaeger.Span)
+
+		//fmt.Println(span.Context())
+		setContext(span, traceID, spanID, parentID)
+
+		// prints trace, span, parent
+		//fmt.Println(span.Context())
+
+		threads[tid] = &threadRunning{
+			span:      span,
+			startTime: startTime,
+			entryLog:  line,
+		}
+	} else if lineMatch[2] == "exit" {
+		// get thread_running
+		thr := threads[tid]
+		if thr == nil {
+			return
+		}
+
+		thr.span.FinishWithOptions(opentracing.FinishOptions{
+			FinishTime: endTime,
+			LogRecords: []opentracing.LogRecord{
+				{
+					Timestamp: startTime,
+					Fields:    []log.Field{log.String("entry_raw", thr.entryLog)},
+				},
+				{
+					Timestamp: endTime,
+					Fields:    []log.Field{log.String("exit_raw", line)},
+				},
 			},
-		},
-	})
+		})
+
+		threads[tid] = nil
+	} else {
+		// drop
+	}
+
 }
 
 func setContext(os *jaeger.Span, trace, span, parent uint64) {
