@@ -94,7 +94,7 @@ func processTrace(rootSpan opentracing.Span, line string) {
 		return
 	}
 
-	fmt.Println(line)
+	//fmt.Println(line)
 
 	timeMatch := reDate.FindStringSubmatch(lineMatch[0])[1:]
 	durMatch := reDur.FindStringSubmatch(lineMatch[1])[1:]
@@ -104,10 +104,10 @@ func processTrace(rootSpan opentracing.Span, line string) {
 	fmt.Println(startTime)
 
 	duration := time.Duration(inty(durMatch[0]))*time.Second + time.Duration(inty(durMatch[1]))*time.Nanosecond
-	fmt.Println(duration)
+	//fmt.Println(duration)
 	endTime := startTime.Add(duration)
 
-	fmt.Println(spanID, traceID, parentID, tid)
+	//fmt.Println(spanID, traceID, parentID, tid)
 
 	operationName := fmt.Sprintf("syscall_%s", lineMatch[3])
 	fmt.Println(operationName)
