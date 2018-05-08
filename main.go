@@ -62,6 +62,8 @@ func main() {
 
 type threadRunning struct {
 	span      *jaeger.Span
+	traceID uint64
+	parentID uint64
 	operationName string
 	startTime time.Time
 	entryLog  string
@@ -106,15 +108,20 @@ func processTrace(rootSpan opentracing.Span, line string) {
 	//fmt.Println(line)
 
 	timeMatch := reDate.FindStringSubmatch(lineMatch[0])[1:]
-	durMatch := reDur.FindStringSubmatch(lineMatch[1])[1:]
 
 	now := time.Now()
 	startTime := time.Date(now.Year(), now.Month(), now.Day(), inty(timeMatch[0]), inty(timeMatch[1]), inty(timeMatch[2]), inty(timeMatch[3]), now.Location())
 	//fmt.Println(startTime)
 
-	duration := time.Duration(inty(durMatch[0]))*time.Second + time.Duration(inty(durMatch[1]))*time.Nanosecond
-	//fmt.Println(duration)
-	endTime := startTime.Add(duration)
+	durMatch := reDur.FindStringSubmatch(lineMatch[1])
+	var endTime time.Time
+	if len(durMatch) >= 3 {
+		duration := time.Duration(inty(durMatch[1]))*time.Second + time.Duration(inty(durMatch[2]))*time.Nanosecond
+		//fmt.Println(duration)
+		endTime = startTime.Add(duration)
+	} else {
+		endTime = startTime
+	}
 
 	//fmt.Println(spanID, traceID, parentID, tid)
 
@@ -136,6 +143,8 @@ func processTrace(rootSpan opentracing.Span, line string) {
 
 		threads[tid] = &threadRunning{
 			span:      span,
+			traceID: traceID,
+			parentID: parentID,
 			operationName: operationName,
 			startTime: startTime,
 			entryLog:  line,
@@ -147,7 +156,7 @@ func processTrace(rootSpan opentracing.Span, line string) {
 			return
 		}
 
-		if thr.operationName != operationName {
+		if thr.operationName != operationName || thr.traceID != traceID || thr.parentID != parentID {
 			threads[tid] = nil
 			return
 		}
