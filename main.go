@@ -44,12 +44,12 @@ func main() {
 		}
 
 		for _, l := range input {
-			processTrace(rootSpan, l)
+			process(rootSpan, l)
 		}
 	} else {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
-			processTrace(rootSpan, scanner.Text())
+			process(rootSpan, scanner.Text())
 		}
 
 		if scanner.Err() != nil {
@@ -68,6 +68,15 @@ type threadRunning struct {
 }
 
 var threads = make(map[uint16]*threadRunning)
+
+func process(rootSpan opentracing.Span, line string) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println(r, "panic in processTrace:", line)
+		}
+	}()
+	processTrace(rootSpan, line)
+}
 
 func processTrace(rootSpan opentracing.Span, line string) {
 	//fmt.Println(line)
