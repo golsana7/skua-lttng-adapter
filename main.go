@@ -84,9 +84,9 @@ func processTrace(rootSpan opentracing.Span, line string) {
 	}
 	//fmt.Println(arr)
 
-	spanID := order.Uint64(arr[0:8])
-	traceID := order.Uint64(arr[8:16])
-	parentID := order.Uint64(arr[16:24])
+	traceID := order.Uint64(arr[0:8])
+	parentID := order.Uint64(arr[8:16])
+	spanID := order.Uint64(arr[16:24])
 	tid := order.Uint16(arr[24:26])
 
 	if traceID == 0 || parentID == 0 {
