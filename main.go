@@ -23,7 +23,7 @@ const jAgentHostPort = "0.0.0.0:6831"
 var (
 	order = binary.LittleEndian
 
-	reg = regexp.MustCompile(`^\[(\d\d:\d\d:\d\d\.\d{1,10})\] \(\+\d+.\d+\) .+ (\w+):.+tid = \[ (\[0\] = \d{1,3}(?:, \[\d{1,2}\] = \d{1,3}){31})`)
+	reg = regexp.MustCompile(`^\[(\d\d:\d\d:\d\d\.\d{1,10})\] \(\+[\d?]+.[\d?]+\) .+ (\w+):.+tid = \[ (\[0\] = \d{1,3}(?:, \[\d{1,2}\] = \d{1,3}){31})`)
 )
 
 const debug = false
