@@ -25,7 +25,7 @@ var (
 
 	reLine = regexp.MustCompile(`^\[(.+)\] \(\+(.+)\) .+ syscall_(.+)_(.+): .+ tid = \[ (\[0\].+\[31\] = \d+) \] .+$`)
 	reDate = regexp.MustCompile(`^(\d+):(\d+):(\d+).(\d+)$`)
-	reDur  = regexp.MustCompile(`^(\d+).(\d+)$`)
+	//reDur  = regexp.MustCompile(`^(\d+).(\d+)$`)
 )
 
 const debug = false
@@ -110,18 +110,9 @@ func processTrace(rootSpan opentracing.Span, line string) {
 	timeMatch := reDate.FindStringSubmatch(lineMatch[0])[1:]
 
 	now := time.Now()
-	startTime := time.Date(now.Year(), now.Month(), now.Day(), inty(timeMatch[0]), inty(timeMatch[1]), inty(timeMatch[2]), inty(timeMatch[3]), now.Location())
-	//fmt.Println(startTime)
-
-	durMatch := reDur.FindStringSubmatch(lineMatch[1])
-	var endTime time.Time
-	if len(durMatch) >= 3 {
-		duration := time.Duration(inty(durMatch[1]))*time.Second + time.Duration(inty(durMatch[2]))*time.Nanosecond
-		//fmt.Println(duration)
-		endTime = startTime.Add(duration)
-	} else {
-		endTime = startTime
-	}
+	fmt.Println(timeMatch)
+	curTime := time.Date(now.Year(), now.Month(), now.Day(), inty(timeMatch[0]), inty(timeMatch[1]), inty(timeMatch[2]), inty(timeMatch[3]), now.Location())
+	fmt.Println(curTime)
 
 	//fmt.Println(spanID, traceID, parentID, tid)
 
@@ -133,7 +124,7 @@ func processTrace(rootSpan opentracing.Span, line string) {
 
 		span := rootSpan.Tracer().StartSpan(
 			operationName,
-			opentracing.StartTime(startTime)).(*jaeger.Span)
+			opentracing.StartTime(curTime)).(*jaeger.Span)
 
 		//fmt.Println(span.Context())
 		setContext(span, traceID, spanID, parentID)
@@ -142,12 +133,12 @@ func processTrace(rootSpan opentracing.Span, line string) {
 		//fmt.Println(span.Context())
 
 		threads[tid] = &threadRunning{
-			span:      span,
-			traceID: traceID,
-			parentID: parentID,
+			span:          span,
+			traceID:       traceID,
+			parentID:      parentID,
 			operationName: operationName,
-			startTime: startTime,
-			entryLog:  line,
+			startTime:     curTime,
+			entryLog:      line,
 		}
 	} else if lineMatch[2] == "exit" {
 		// get thread_running
@@ -162,14 +153,14 @@ func processTrace(rootSpan opentracing.Span, line string) {
 		}
 
 		thr.span.FinishWithOptions(opentracing.FinishOptions{
-			FinishTime: endTime,
+			FinishTime: curTime,
 			LogRecords: []opentracing.LogRecord{
 				{
-					Timestamp: startTime,
+					Timestamp: thr.startTime,
 					Fields:    []log.Field{log.String("entry_raw", thr.entryLog)},
 				},
 				{
-					Timestamp: endTime,
+					Timestamp: curTime,
 					Fields:    []log.Field{log.String("exit_raw", line)},
 				},
 			},
