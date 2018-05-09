@@ -240,6 +240,12 @@ func makeTracer() opentracing.Tracer {
 			BufferFlushInterval: 1 * time.Second,
 			LocalAgentHostPort:  jAgentHostPort,
 		},
+		Tags: []opentracing.Tag{
+			{
+				Key:   "ip",
+				Value: "127.0.0.1",
+			},
+		},
 	}
 
 	tracer, _, err := cfg.NewTracer()
