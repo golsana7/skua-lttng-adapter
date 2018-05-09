@@ -197,7 +197,7 @@ func processTrace(rootSpan opentracing.Span, line string) {
 
 		thr.logs = append(thr.logs, opentracing.LogRecord{
 			Timestamp: curTime,
-			Fields: []log.Field{log.String("event", line), strTime(curTime)},
+			Fields: []log.Field{log.String(operationName, line), strTime(curTime)},
 		})
 	}
 
