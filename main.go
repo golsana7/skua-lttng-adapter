@@ -124,9 +124,9 @@ func processTrace(rootSpan opentracing.Span, line string) {
 	operationName := lineMatch[2]
 	//fmt.Println(operationName)
 
-	fmt.Print(".")
-
 	if strings.HasPrefix(operationName, "syscall") {
+		fmt.Print(".")
+
 		if strings.HasPrefix(operationName, "syscall_entry") {
 			operationName = "syscall" + strings.TrimPrefix(operationName, "syscall_entry")
 
@@ -182,7 +182,8 @@ func processTrace(rootSpan opentracing.Span, line string) {
 			fmt.Print("s")
 		}
 	} else {
-		// kernel event
+		// kernel tracepoint event
+		fmt.Print("k")
 
 		thr := threads[tid]
 		if thr == nil {
