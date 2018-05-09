@@ -148,7 +148,7 @@ func processTrace(rootSpan opentracing.Span, line string) {
 				logs: []opentracing.LogRecord{
 					{
 						Timestamp: curTime,
-						Fields:    []log.Field{log.String("entry_raw", line)},
+						Fields:    []log.Field{log.String("entry_raw", line), strTime(curTime)},
 					},
 				},
 			}
@@ -168,7 +168,7 @@ func processTrace(rootSpan opentracing.Span, line string) {
 
 			thr.logs = append(thr.logs, opentracing.LogRecord{
 				Timestamp: curTime,
-				Fields:    []log.Field{log.String("exit_raw", line)},
+				Fields:    []log.Field{log.String("exit_raw", line), strTime(curTime)},
 			})
 
 			thr.span.FinishWithOptions(opentracing.FinishOptions{
@@ -197,7 +197,7 @@ func processTrace(rootSpan opentracing.Span, line string) {
 
 		thr.logs = append(thr.logs, opentracing.LogRecord{
 			Timestamp: curTime,
-			Fields: []log.Field{log.String("event", line)},
+			Fields: []log.Field{log.String("event", line), strTime(curTime)},
 		})
 	}
 
@@ -222,6 +222,10 @@ func setContext(os *jaeger.Span, trace, span, parent uint64) {
 func inty(l string) int {
 	x, _ := strconv.Atoi(l)
 	return x
+}
+
+func strTime(t time.Time) log.Field {
+	return log.String("timestamp", fmt.Sprint(t.UnixNano()))
 }
 
 func makeTracer() opentracing.Tracer {
