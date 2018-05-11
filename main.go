@@ -33,7 +33,8 @@ func main() {
 
 	// note: this span should not show up in the final jaeger outputs
 	rootSpan := tracer.StartSpan("kernel_root")
-
+	
+	// TODO: should have used parameters `babeltrace --clock-gmt --no-delta`
 	if debug {
 		input := []string{
 			`[16:16:48.772397108] (+0.000000994) voxel kmem_kfree: { cpu_id = 16 }, { pid = 3494, tid = [ [0] = 113, [1] = 31, [2] = 104, [3] = 211, [4] = 12, [5] = 147, [6] = 45, [7] = 0, [8] = 113, [9] = 31, [10] = 104, [11] = 211, [12] = 12, [13] = 147, [14] = 45, [15] = 0, [16] = 249, [17] = 119, [18] = 75, [19] = 176, [20] = 254, [21] = 27, [22] = 162, [23] = 207, [24] = 166, [25] = 13, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { call_site = 0xFFFFFFFFB72B18C0, ptr = 0xFFFFA1E261CE8A80 }`,
