@@ -77,10 +77,11 @@ func process(rootSpan opentracing.Span, line string) {
 			fmt.Println(r, "panic in processTrace:", line)
 		}
 	}()
-	processTrace(rootSpan, line)
+	r := processTrace(rootSpan, line)
+	fmt.Print(r)
 }
 
-func processTrace(rootSpan opentracing.Span, line string) {
+func processTrace(rootSpan opentracing.Span, line string) string {
 	//fmt.Println(line)
 	//defer fmt.Println()
 
@@ -107,7 +108,7 @@ func processTrace(rootSpan opentracing.Span, line string) {
 
 	if traceID == 0 || parentID == 0 {
 		//fmt.Println("dropping")
-		return
+		return "_"
 	}
 
 	//fmt.Println(line)
@@ -126,8 +127,6 @@ func processTrace(rootSpan opentracing.Span, line string) {
 	//fmt.Println(operationName)
 
 	if strings.HasPrefix(operationName, "syscall") {
-		fmt.Print(".")
-
 		if strings.HasPrefix(operationName, "syscall_entry") {
 			operationName = "syscall" + strings.TrimPrefix(operationName, "syscall_entry")
 
@@ -159,12 +158,12 @@ func processTrace(rootSpan opentracing.Span, line string) {
 			// get thread_running
 			thr := threads[tid]
 			if thr == nil {
-				return
+				return "x"
 			}
 
 			if thr.operationName != operationName || thr.traceID != traceID || thr.parentID != parentID {
 				threads[tid] = nil
-				return
+				return "x"
 			}
 
 			thr.logs = append(thr.logs, opentracing.LogRecord{
@@ -180,28 +179,28 @@ func processTrace(rootSpan opentracing.Span, line string) {
 			threads[tid] = nil
 		} else {
 			// drop
-			fmt.Print("s")
+			return "s"
 		}
+		return "."
 	} else {
 		// kernel tracepoint event
-		fmt.Print("k")
 
 		thr := threads[tid]
 		if thr == nil {
-			return
+			return "x"
 		}
 
 		if thr.traceID != traceID || thr.parentID != parentID {
 			// ignore events without matching trace/parent IDs
-			return
+			return "x"
 		}
 
 		thr.logs = append(thr.logs, opentracing.LogRecord{
 			Timestamp: curTime,
 			Fields: []log.Field{log.String(operationName, line), strTime(curTime)},
 		})
+		return "k"
 	}
-
 }
 
 func setContext(os *jaeger.Span, trace, span, parent uint64) {
