@@ -92,7 +92,7 @@ func processTrace(rootSpan opentracing.Span, line string) string {
 	tid := order.Uint16(arr[24:26])
 	//fmt.Println(traceID, parentID, spanID, tid)
 
-	if traceID == 0 || parentID == 0 {
+	if traceID == 0 || parentID == 0 || spanID == 0 {
 		//fmt.Println("dropping")
 		return "_"
 	}
