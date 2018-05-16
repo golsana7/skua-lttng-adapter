@@ -26,7 +26,7 @@ var (
 	reg = regexp.MustCompile(`^.+ (\w+):.+tid = \[ (\[0\] = \d{1,3}(?:, \[\d{1,2}\] = \d{1,3}){31})`)
 )
 
-const debug = true
+const debug = false
 
 func main() {
 	tracer := makeTracer()
