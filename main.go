@@ -63,6 +63,7 @@ type threadRunning struct {
 	span          *jaeger.Span
 	traceID       uint64
 	parentID      uint64
+	spanID        uint64
 	operationName string
 	logs          []opentracing.LogRecord
 }
@@ -116,6 +117,7 @@ func processTrace(rootSpan opentracing.Span, line string) string {
 				span:          span,
 				traceID:       traceID,
 				parentID:      parentID,
+				spanID:        spanID,
 				operationName: operationName,
 				logs: []opentracing.LogRecord{
 					{
@@ -162,7 +164,7 @@ func processTrace(rootSpan opentracing.Span, line string) string {
 			return "x"
 		}
 
-		if thr.traceID != traceID || thr.parentID != parentID {
+		if thr.traceID != traceID || thr.parentID != parentID || thr.spanID != spanID {
 			// ignore events without matching trace/parent IDs
 			return "x"
 		}
