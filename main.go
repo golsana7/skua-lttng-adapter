@@ -23,25 +23,23 @@ const jAgentHostPort = "0.0.0.0:6831"
 var (
 	order = binary.LittleEndian
 
-	reg = regexp.MustCompile(`^\[(\d\d:\d\d:\d\d\.\d{1,10})\] \(\+[\d?]+.[\d?]+\) .+ (\w+):.+tid = \[ (\[0\] = \d{1,3}(?:, \[\d{1,2}\] = \d{1,3}){31})`)
+	reg = regexp.MustCompile(`^.+ (\w+):.+tid = \[ (\[0\] = \d{1,3}(?:, \[\d{1,2}\] = \d{1,3}){31})`)
 )
 
-const debug = false
+const debug = true
 
 func main() {
 	tracer := makeTracer()
 
 	// note: this span should not show up in the final jaeger outputs
 	rootSpan := tracer.StartSpan("kernel_root")
-	
-	// TODO: should have used parameters `babeltrace --clock-gmt --no-delta`
+
+	// using parameters `babeltrace --clock-date --clock-gmt --no-delta`
 	if debug {
 		input := []string{
-			`[16:16:48.772397108] (+0.000000994) voxel kmem_kfree: { cpu_id = 16 }, { pid = 3494, tid = [ [0] = 113, [1] = 31, [2] = 104, [3] = 211, [4] = 12, [5] = 147, [6] = 45, [7] = 0, [8] = 113, [9] = 31, [10] = 104, [11] = 211, [12] = 12, [13] = 147, [14] = 45, [15] = 0, [16] = 249, [17] = 119, [18] = 75, [19] = 176, [20] = 254, [21] = 27, [22] = 162, [23] = 207, [24] = 166, [25] = 13, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { call_site = 0xFFFFFFFFB72B18C0, ptr = 0xFFFFA1E261CE8A80 }`,
-			`[16:16:48.772400477] (+0.000001213) voxel writeback_dirty_inode_start: { cpu_id = 16 }, { pid = 3494, tid = [ [0] = 113, [1] = 31, [2] = 104, [3] = 211, [4] = 12, [5] = 147, [6] = 45, [7] = 0, [8] = 113, [9] = 31, [10] = 104, [11] = 211, [12] = 12, [13] = 147, [14] = 45, [15] = 0, [16] = 249, [17] = 119, [18] = 75, [19] = 176, [20] = 254, [21] = 27, [22] = 162, [23] = 207, [24] = 166, [25] = 13, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { name = "(unknown)", ino = 4026532273, state = 0, flags = 7 }`,
-			`[16:16:48.772403141] (+0.000001895) voxel kmem_cache_free: { cpu_id = 16 }, { pid = 3494, tid = [ [0] = 113, [1] = 31, [2] = 104, [3] = 211, [4] = 12, [5] = 147, [6] = 45, [7] = 0, [8] = 113, [9] = 31, [10] = 104, [11] = 211, [12] = 12, [13] = 147, [14] = 45, [15] = 0, [16] = 249, [17] = 119, [18] = 75, [19] = 176, [20] = 254, [21] = 27, [22] = 162, [23] = 207, [24] = 166, [25] = 13, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { call_site = 0xFFFFFFFFB723EDF0, ptr = 0xFFFFA1E26A675000 }`,
-			`[16:16:48.772408379] (+0.000003779) voxel syscall_entry_newfstat: { cpu_id = 16 }, { pid = 3494, tid = [ [0] = 113, [1] = 31, [2] = 104, [3] = 211, [4] = 12, [5] = 147, [6] = 45, [7] = 0, [8] = 113, [9] = 31, [10] = 104, [11] = 211, [12] = 12, [13] = 147, [14] = 45, [15] = 0, [16] = 145, [17] = 155, [18] = 174, [19] = 57, [20] = 0, [21] = 4, [22] = 10, [23] = 251, [24] = 166, [25] = 13, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { fd = 16 }`,
-			`[16:16:48.772410359] (+0.000001980) voxel syscall_exit_newfstat: { cpu_id = 16 }, { pid = 3494, tid = [ [0] = 113, [1] = 31, [2] = 104, [3] = 211, [4] = 12, [5] = 147, [6] = 45, [7] = 0, [8] = 113, [9] = 31, [10] = 104, [11] = 211, [12] = 12, [13] = 147, [14] = 45, [15] = 0, [16] = 145, [17] = 155, [18] = 174, [19] = 57, [20] = 0, [21] = 4, [22] = 10, [23] = 251, [24] = 166, [25] = 13, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { ret = 0, statbuf = 140729043239456 }`,
+			`[2018-05-16 01:51:29.858503019] voxel kmem_cache_free: { cpu_id = 4 }, { pid = 3197, tid = [ [0] = 124, [1] = 228, [2] = 28, [3] = 56, [4] = 30, [5] = 168, [6] = 11, [7] = 0, [8] = 124, [9] = 228, [10] = 28, [11] = 56, [12] = 30, [13] = 168, [14] = 11, [15] = 0, [16] = 25, [17] = 111, [18] = 110, [19] = 151, [20] = 169, [21] = 184, [22] = 57, [23] = 235, [24] = 125, [25] = 12, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { call_site = 0xFFFFFFFF8F23EDF0, ptr = 0xFFFF8FEFEA57D000 }`,
+			`[2018-05-16 01:51:29.858505538] voxel syscall_exit_newfstat: { cpu_id = 4 }, { pid = 3197, tid = [ [0] = 124, [1] = 228, [2] = 28, [3] = 56, [4] = 30, [5] = 168, [6] = 11, [7] = 0, [8] = 124, [9] = 228, [10] = 28, [11] = 56, [12] = 30, [13] = 168, [14] = 11, [15] = 0, [16] = 227, [17] = 213, [18] = 154, [19] = 97, [20] = 114, [21] = 148, [22] = 101, [23] = 214, [24] = 125, [25] = 12, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { ret = 0, statbuf = 140734798894416 }`,
+			`[2018-05-16 01:51:29.858514497] voxel syscall_entry_write: { cpu_id = 4 }, { pid = 3197, tid = [ [0] = 124, [1] = 228, [2] = 28, [3] = 56, [4] = 30, [5] = 168, [6] = 11, [7] = 0, [8] = 124, [9] = 228, [10] = 28, [11] = 56, [12] = 30, [13] = 168, [14] = 11, [15] = 0, [16] = 91, [17] = 86, [18] = 156, [19] = 50, [20] = 12, [21] = 204, [22] = 116, [23] = 51, [24] = 125, [25] = 12, [26] = 0, [27] = 0, [28] = 0, [29] = 0, [30] = 0, [31] = 0 ] }, { fd = 16, buf = 94348888381472, count = 16 }`,
 		}
 
 		for _, l := range input {
@@ -62,43 +60,30 @@ func main() {
 }
 
 type threadRunning struct {
-	span      *jaeger.Span
-	traceID uint64
-	parentID uint64
+	span          *jaeger.Span
+	traceID       uint64
+	parentID      uint64
 	operationName string
-	logs []opentracing.LogRecord
+	logs          []opentracing.LogRecord
 }
 
 var threads = make(map[uint16]*threadRunning)
 
 func process(rootSpan opentracing.Span, line string) {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println(r, "panic in processTrace:", line)
-		}
-	}()
+	if !debug {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Println(r, "panic in processTrace:", line)
+			}
+		}()
+	}
 	r := processTrace(rootSpan, line)
 	fmt.Print(r)
 }
 
 func processTrace(rootSpan opentracing.Span, line string) string {
-	//fmt.Println(line)
-	//defer fmt.Println()
-
-	lineMatch := reg.FindStringSubmatch(line)
-	//fmt.Println(lineMatch)
-	// [0] -> original line
-	// [1] -> time
-	// [2] -> name
-	// [3] -> tid array
-
-	strArr := strings.Split(lineMatch[3], ", ")
-	var arr []byte
-	for _, a := range strArr {
-		num := inty(strings.Split(a, " = ")[1])
-		arr = append(arr, byte(num))
-	}
-	//fmt.Println(arr)
+	operationName, curTime, arr := parse(line)
+	//fmt.Println(operationName, curTime)
 
 	traceID := order.Uint64(arr[0:8])
 	parentID := order.Uint64(arr[8:16])
@@ -111,19 +96,6 @@ func processTrace(rootSpan opentracing.Span, line string) string {
 		return "_"
 	}
 
-	//fmt.Println(line)
-
-	timeStr := lineMatch[1]
-	//fmt.Println(timeStr)
-	tb1 := strings.Split(timeStr, ".")
-	tb0 := strings.Split(tb1[0], ":")
-
-	now := time.Now()
-	//fmt.Println(timeMatch)
-	curTime := time.Date(now.Year(), now.Month(), now.Day(), inty(tb0[0]), inty(tb0[1]), inty(tb0[2]), inty(tb1[1]), now.Location())
-	//fmt.Println(curTime)
-
-	operationName := lineMatch[2]
 	//fmt.Println(operationName)
 
 	if strings.HasPrefix(operationName, "syscall") {
@@ -197,10 +169,48 @@ func processTrace(rootSpan opentracing.Span, line string) string {
 
 		thr.logs = append(thr.logs, opentracing.LogRecord{
 			Timestamp: curTime,
-			Fields: []log.Field{log.String(operationName, line), strTime(curTime)},
+			Fields:    []log.Field{log.String(operationName, line), strTime(curTime)},
 		})
 		return "k"
 	}
+}
+
+func parse(line string) (operationName string, tm time.Time, arr []byte) {
+	//fmt.Println(line)
+	//defer fmt.Println()
+
+	timeBreak := strings.SplitN(strings.TrimPrefix(line, "["), "] ", 2)
+
+	timeStr := timeBreak[0]
+	lg := timeBreak[1]
+
+	//fmt.Println(lg)
+	lineMatch := reg.FindStringSubmatch(lg)
+	//fmt.Println(lineMatch)
+	// [0] -> original line
+	// [1] -> name
+	// [2] -> tid array
+
+	operationName = lineMatch[1]
+
+	strArr := strings.Split(lineMatch[2], ", ")
+	for _, a := range strArr {
+		num := inty(strings.Split(a, " = ")[1])
+		arr = append(arr, byte(num))
+	}
+	//fmt.Println(arr)
+
+	//fmt.Println(line)
+
+	layout := "2006-01-02 15:04:05.999999999"
+	//fmt.Println(timeMatch)
+	tm, err := time.Parse(layout, timeStr)
+	if err != nil {
+		panic(err)
+	}
+	//fmt.Println(curTime)
+
+	return
 }
 
 func setContext(os *jaeger.Span, trace, span, parent uint64) {
