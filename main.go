@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/binary"
 	"fmt"
 	"os"
@@ -11,7 +12,6 @@ import (
 	"time"
 	"unsafe"
 
-	"bufio"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/uber/jaeger-client-go"
